@@ -1,0 +1,16 @@
+{
+  "name": "react_app_ec2_host",
+  "version": "1.0.0",
+  "description": "react app",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "test": "jest"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "jest": "^30.0.5"
+  },
+  "author": "Chinny",
+  "license": "ISC"
+}
