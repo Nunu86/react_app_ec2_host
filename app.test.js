@@ -1,26 +1,17 @@
-/**
- * @jest-environment jsdom
- */
+// app.test.js
+const request = require("supertest");
+const app = require("./app"); // Import the Express app
 
-// Set up DOM for the test
-beforeEach(() => {
-  document.body.innerHTML = `<h1 id="textRotate">Hello World</h1>`;
-});
+describe("Node.js Backend API", () => {
+  test("GET / should return greeting message", async () => {
+    const response = await request(app).get("/");
+    expect(response.statusCode).toBe(200);
+    expect(response.text).toBe("Hello from Node.js backend!");
+  });
 
-let angle = 0;
-function rotateText() {
-  const rotate = document.getElementById("textRotate");
-  if (rotate) {
-    angle = (angle + 2) % 360;
-    rotate.style.transform = `rotate(${angle}deg)`;
-  }
-}
-
-test("rotateText rotates the element", () => {
-  rotateText();
-  const rotate = document.getElementById("textRotate");
-  expect(rotate.style.transform).toBe("rotate(2deg)");
-
-  rotateText();
-  expect(rotate.style.transform).toBe("rotate(4deg)");
+  test("GET /api/greet should return JSON message", async () => {
+    const response = await request(app).get("/api/greet");
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toEqual({ message: "Hello from API!" });
+  });
 });

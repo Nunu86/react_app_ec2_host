@@ -1,9 +1,24 @@
-let angle = 0; // Initialize angle variable
-function rotateText() {
-  const rotate = document.getElementById("textRotate");
-  if (rotate) {
-    angle = (angle + 2) % 360; // Increase angle, keep within 0-359
-    rotate.style.transform = `rotate(${angle}deg)`;
-  }
-}
-setInterval(rotateText, 20);
+// app.js
+const express = require("express");
+const app = express();
+const PORT = 5000;
+
+// Middleware to parse JSON (if needed)
+app.use(express.json());
+
+// Root route
+app.get("/", (req, res) => {
+  res.send("Hello from Node.js backend!");
+});
+
+// Example API route
+app.get("/api/greet", (req, res) => {
+  res.json({ message: "Hello from API!" });
+});
+
+// Start server
+app.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
+});
+
+module.exports = app; // Export app for testing purposes
