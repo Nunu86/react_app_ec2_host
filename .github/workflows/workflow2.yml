@@ -46,8 +46,9 @@ jobs:
           docker build -t $ECR_REPO:${{github.run_number}} .
           docker push $ECR_REPO:${{ github.run_number }}
 
-      - name: Update task definition with new image
+      - name: Describe task definition
         run: |
+          aws ecs describe-task-definition --task-definition $ECS_TASK_DEFINITION > task_definition.json
           jq --arg Image "$newImage" \
           '.taskDefinition
           | .containerDefinitions[0].image = $Image
