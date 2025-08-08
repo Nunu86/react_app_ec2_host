@@ -9,6 +9,7 @@ env:
   ECS_CLUSTER: "polite-elephant-11u324"
   ECS_SERVICE: "my_react_td-service-fvw025pv"
   ECS_TASK_DEFINITION: "my_react_td"
+  newImage: "$ECR_REPO:${{github.run_number}}"
 
 jobs:
   build:
@@ -48,7 +49,7 @@ jobs:
       - name: Describe task definition
         run: |
           aws ecs describe-task-definition --task-definition $ECS_TASK_DEFINITION > task_definition.json  
-          jq '.taskDefinition.containerDefinitions[0].image = "$ECR_REPO:${{github.run_number}}" | .taskDefinition' task_definition.json > updated_task_definition.json
+          jq --arg Image "$newImage" '.taskDefinition.containerDefinitions[0].image = $Image | .taskDefinition' task_definition.json > updated_task_definition.json
 
       - name: Register ECS task definition
         run: |
