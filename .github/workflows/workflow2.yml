@@ -9,7 +9,7 @@ env:
   ECS_CLUSTER: "polite-elephant-11u324"
   ECS_SERVICE: "my_react_td-service-fvw025pv"
   ECS_TASK_DEFINITION: "my_react_td"
-  newImage: "$ECR_REPO:${{github.run_number}}"
+  newImage: "621214085626.dkr.ecr.us-east-1.amazonaws.com/nunuokorie/react_app:${{github.run_number}}"
 
 jobs:
   build:
