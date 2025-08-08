@@ -5,6 +5,10 @@ on:
 
 env:
   ECR_REPO_URI: "621214085626.dkr.ecr.us-east-1.amazonaws.com"
+  ECR_REPO: "621214085626.dkr.ecr.us-east-1.amazonaws.com/nunuokorie/react_app"
+  ECS_CLUSTER: "polite-elephant-11u324"
+  ECS_SERVICE: "my_react_td-service-fvw025pv"
+  ECS_TASK_DEFINITION: "my_react_td"
 
 jobs:
   build:
@@ -38,13 +42,13 @@ jobs:
 
       - name: Build the application with docker
         run: |
-          docker build -t ${{env.ECR_REPO}}:${{github.run_number}} .
-          docker push ${{ env.ECR_REPO }}:${{ github.run_number }}
+          docker build -t $ECR_REPO:${{github.run_number}} .
+          docker push $ECR_REPO:${{ github.run_number }}
 
       - name: Describe task definition
         run: |
-          aws ecs describe-task-definition --task-definition ${{ env.ECS_TASK_DEFINITION }} > task_definition.json  
-          jq '.taskDefinition.containerDefinitions[0].image = "${{env.ECR_REPO}}:${{github.run_number}}"' task_definition.json > updated_task_definition.json
+          aws ecs describe-task-definition --task-definition $ECS_TASK_DEFINITION > task_definition.json  
+          jq '.taskDefinition.containerDefinitions[0].image = "$ECR_REPO:${{github.run_number}}"' task_definition.json > updated_task_definition.json
 
       - name: Register ECS task definition
         run: |
@@ -54,19 +58,19 @@ jobs:
       - name: update ECS service
         run: |
           aws ecs update-service \
-          --cluster ${{ env.ECS_CLUSTER }} \
-          --task-definition ${{ env.ECS_TASK_DEFINITION }} \
-           --service ${{ env.ECS_SERVICE }}
+          --cluster $ECS_CLUSTER \
+          --task-definition $ECS_TASK_DEFINITION \
+           --service $ECS_SERVICE
 
       - name: Wait for ECS service to stabilize
         run: |
           aws ecs wait services-stable \
-          --cluster ${{ env.ECS_CLUSTER }} \
-          --services ${{ env.ECS_SERVICE }}
+          --cluster $ECS_CLUSTER \
+          --services $ECS_SERVICE
 
       - name: Cleanup
         run: |
           rm task_definition.json updated_task_definition.json  
-          docker rmi ${{ env.ECR_REPO }}:${{ github.run_number }} || true
-          docker rmi ${{ env.ECR_REPO }}:latest || true
+          docker rmi $ECR_REPO:${{ github.run_number }} || true
+          docker rmi $ECR_REPO:latest || true
           docker system prune -f || true
