@@ -1,0 +1,69 @@
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "18.14.0" # Specify the Node.js version
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run tests
+        run: npm test -- --forceExit
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: "us-east-1" # Replace with your AWS region
+
+      - name: Log in to ECR
+        run: |
+          aws ecs get-login-password --region "us-east-1" | docker login --username AWS --password-stdin ${{ env.ECR_REPO }}
+
+      - name: Build the application with docker
+        run: |
+          docker build -t ${env.ECR_REPO}:${{github.run_number}} .
+          docker push ${{ env.ECR_REPO }}:${{ github.run_number }}
+
+      - name: Describe task definition
+        run: |
+          aws ecs describe-task-definition --task-definition ${{ env.ECS_TASK_DEFINITION }} > task_definition.json  
+          jq '.taskDefinition.containerDefinitions[0].image = "${{env.ECR_REPO}}:${{github.run_number}}"' task_definition.json > updated_task_definition.json
+
+      - name: Register ECS task definition
+        run: |
+          aws ecs register-task-definition \
+            --cli-input-json file://updated_task_definition.json
+
+      - name: update ECS service
+        run: |
+          aws ecs update-service \
+          --cluster ${{ env.ECS_CLUSTER }} \
+          --task-definition ${{ env.ECS_TASK_DEFINITION }} \
+           --service ${{ env.ECS_SERVICE }}
+
+      - name: Wait for ECS service to stabilize
+        run: |
+          aws ecs wait services-stable \
+          --cluster ${{ env.ECS_CLUSTER }} \
+          --services ${{ env.ECS_SERVICE }}
+
+      - name: Cleanup
+        run: |
+          rm task_definition.json updated_task_definition.json  
+          docker rmi ${{ env.ECR_REPO }}:${{ github.run_number }} || true
+          docker rmi ${{ env.ECR_REPO }}:latest || true
+          docker system prune -f || true
