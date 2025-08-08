@@ -48,7 +48,7 @@ jobs:
       - name: Describe task definition
         run: |
           aws ecs describe-task-definition --task-definition $ECS_TASK_DEFINITION > task_definition.json  
-          jq '.taskDefinition.containerDefinitions[0].image = "$ECR_REPO:${{github.run_number}}"' task_definition.json > updated_task_definition.json
+          jq '.taskDefinition.containerDefinitions[0].image = "$ECR_REPO:${{github.run_number}}" | .taskDefinition' task_definition.json > updated_task_definition.json
 
       - name: Register ECS task definition
         run: |
